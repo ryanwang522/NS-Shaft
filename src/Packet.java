@@ -31,6 +31,5 @@ class Packet implements Serializable {
         this.isPlaying = isPlaying;
         this.winner = winner;
         this.playerIndex = pIndex;
-        // System.out.println(this.platforms[0].getY());
     }
 }

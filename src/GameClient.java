@@ -46,6 +46,9 @@ public class GameClient implements Runnable {
                 dataReceived = ois.readObject();
                 if (dataReceived instanceof Packet) {
                     curPacket = (Packet) dataReceived;
+                    if (playerIndex == -1) {
+                        playerIndex = curPacket.playerIndex;
+                    }
                     for (int i = 0; i < 7; i++) {
                         curPacket.platforms[i].setY(curPacket.platformY[i]);
                         curPacket.platforms[i].setX(curPacket.platformX[i]);

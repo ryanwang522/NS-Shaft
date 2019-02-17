@@ -257,9 +257,12 @@ public class NSShaft extends JPanel implements ActionListener, KeyListener {
             for (int i = 0; i < gameInfo.players.length; i++)
                 gameInfo.players[i].draw(g2);
 
-            for (int i = 0; i < platforms.length; i++) 
-                platforms[i].draw(g2);
-            
+            for (int i = 0; i < gameInfo.platforms.length; i++) {
+                if (platforms[i] != null)
+                    platforms[i].draw(g2);
+                else 
+                    System.out.println("null");
+            }
         }
         topSpike.draw(g2);
     }
@@ -354,11 +357,16 @@ public class NSShaft extends JPanel implements ActionListener, KeyListener {
                 //}
 
                 GameServer server = cs.getServer();
-                System.out.println("Waiting for connect..." + this.gameInfo.isPlaying);
+                System.out.println("Waiting for connect...");
 
                 client = new GameClient(server.getServerIP(), 8000);
 
                 while (!server.isGameStart) {}
+                try {
+					Thread.sleep(300);
+				} catch (InterruptedException e1) {
+					e1.printStackTrace();
+				}
                 dualModeStart();
 
 
@@ -391,9 +399,15 @@ public class NSShaft extends JPanel implements ActionListener, KeyListener {
         }
         
         if (e.getSource() == gameTimer) {
-            if (playerNum == 1 || client.packet.playerIndex == 0) {
+            if (playerNum == 2 && client.playerIndex == -1) {
+                /* receive packet to update playerIndex first */
+                client.recvPacket();
+                return;
+            }
+
+            if (playerNum == 1 || client.playerIndex == 0) {
                 seconds++;
-                if (seconds == 100) {
+                if (seconds % 100 == 0) {
                     // the difficulty can be changed by pressing different radio
                     // buttons
                     if (rbEasy.isSelected()) {
@@ -403,7 +417,9 @@ public class NSShaft extends JPanel implements ActionListener, KeyListener {
                     } else if (rbHard.isSelected()) {
                         platformTimer = new Timer(8, this);
                     }
+
                     platformTimer.restart();
+
                 }
                 if (seconds % 1000 == 0 && seconds != 0) {
                     // when an amount of time has passed, the level will increase
@@ -424,6 +440,7 @@ public class NSShaft extends JPanel implements ActionListener, KeyListener {
                     // if player does not intersect any platforms, he moves down
                     // else if player intersects any platforms, he moves up
                     checkCurrentPlatform(player);
+                    //System.out.println("after check");
                     if (player.curPlatform == -1)
                         player.moveDown();
                     else 
@@ -434,13 +451,14 @@ public class NSShaft extends JPanel implements ActionListener, KeyListener {
                     
                     // put in another place?
                     if (players[i].live == 0 || players[i].getY() >= 600) {
-                        winner = ~i;
+                        winner = 1 - i;
                         endGame();
                         break;
                     }
                 }
             } else {
                 // Dual mode player2 client
+                System.out.println("Player2");
                 ply2Packet = client.recvPacket();
                 if (ply2Packet != null) {
                     if (client.playerIndex == -1) 
@@ -449,7 +467,8 @@ public class NSShaft extends JPanel implements ActionListener, KeyListener {
                     // your player
                     players[0] = ply2Packet.players[client.playerIndex];
                     // others player
-                    players[1] = ply2Packet.players[~client.playerIndex];
+                    players[1] = ply2Packet.players[1 - client.playerIndex];
+
                     platforms = ply2Packet.platforms;
                     this.start = ply2Packet.isPlaying;
                     ply2Packet = null;
@@ -463,7 +482,7 @@ public class NSShaft extends JPanel implements ActionListener, KeyListener {
 
         if (e.getSource() == platformTimer) {
             /* Single mode or dual mode's server side */
-            if (playerNum == 1 || client.packet.playerIndex == 0) {
+            if (playerNum == 1 || client.playerIndex == 0) {
                 for (int i = 0; i < platforms.length; i++) {
                     platforms[i].move();
                     int platformObjectID = System.identityHashCode(platforms[i]);
@@ -477,7 +496,7 @@ public class NSShaft extends JPanel implements ActionListener, KeyListener {
                 }
                 this.gameInfo.updateEnv(this.platforms);
             }
-
+            
         }
         
         /* The game hasn't started */ 

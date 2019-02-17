@@ -8,7 +8,10 @@ public abstract class Platform {
 	protected int direction;
 	
 	public void draw(Graphics2D g2) {
-		g2.drawImage(this.image.getImage(), xPos, yPos, null);
+		if (this.image.getImage() == null)
+			System.out.println("Getimg null");
+		if (g2 != null)
+			g2.drawImage(this.image.getImage(), xPos, yPos, null);
 	}
 	
 	

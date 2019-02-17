@@ -25,8 +25,12 @@ public class GameInfo {
         //for (int i = 0; i < players.length; i++) 
         //    this.players[i] = p[i];
 
-        for (int i = 0; i < platforms.length; i++)
+        for (int i = 0; i < platforms.length; i++) {
             this.platforms[i] = plat[i];
+            if (platforms[i] == null)
+                System.out.println("NULLLLLLL");
+
+        }
 
     }
 

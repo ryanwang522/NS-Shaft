@@ -62,9 +62,9 @@ public class GameServer {
                 playerIndex++;
 
                 // wait for the two players
-                if (playerIndex == 1) {
+                if (playerIndex == 2) {
                     System.out.println(playerIPs.get(0));
-                    //System.out.println(playerIPs.get(1));
+                    System.out.println(playerIPs.get(1));
                     System.out.println("There are two players, Game start!!!");
                     break;
                 }
@@ -111,7 +111,6 @@ class Session implements Runnable {
             this.platforms[i] = p.platforms[i];
         this.p = p;
         this.playerIndex = pIndex;
-        System.out.println("session: " + this.players[0]);
     }
 
     public void run() {
@@ -123,7 +122,7 @@ class Session implements Runnable {
             System.out.println(e.getMessage());
         }
 
-        System.out.println("isPlaying: " + p.isPlaying);
+        //System.out.println("isPlaying: " + p.isPlaying);
         while(p.isPlaying) {
              
             try {
@@ -142,7 +141,8 @@ class Session implements Runnable {
                             // moveRight
                             //p.updataPlayer(playerIndex, 1);
                             p.players[playerIndex].curDirection = 1;
-                            System.out.println(String.valueOf(playerIndex) + " moves RIGHT");
+                            System.out.println("[SERVER] " + 
+                                String.valueOf(playerIndex) + " moves RIGHT");
                         }
                         
                         if (str.equals("LEFT")) {
@@ -150,18 +150,21 @@ class Session implements Runnable {
                             //p.updataPlayer(playerIndex, 0);
                             p.players[playerIndex].curDirection = 0;
                             //System.out.println(p.players[playerIndex].curDirection);
-                            System.out.println(String.valueOf(playerIndex) + " moves LEFT");
+                            System.out.println("[SERVER] " + 
+                                String.valueOf(playerIndex) + " moves LEFT");
                         }
                         
                         if (str.equals("RELEASE")) {
                             p.players[playerIndex].curDirection = -1;
+                            System.out.println("[SERVER] " + 
+                                String.valueOf(playerIndex) + " released");
                         }
                         
                     }
 
                 }
             } catch (IOException e) {
-                //System.out.println("this? " + e.getMessage());
+                //System.out.println("Server IOExcpt " + e.getMessage());
             } catch (ClassNotFoundException e) {
                 e.printStackTrace();
             } 
