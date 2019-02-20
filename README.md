@@ -1,8 +1,8 @@
 # Overview
 * This is a classical game that player should keep going down stair for staying alive.
-* This project for practicing `Network` and `Polymorphism` in Java.
+* This project is for practicing `Network` and `Polymorphism` in Java.
 * Here is a simple demo for single player mode
-* ![](https://i.imgur.com/qRtKe4J.gif)
+* ![](https://github.com/ryanwang522/NS-Shaft/blob/master/demo.gif)
 
 ### Network
 * Server-client architecture using socket.
@@ -23,4 +23,4 @@ Java HotSpot(TM) 64-Bit Server VM 18.3 (build 10.0.1+10, mixed mode)
 ```
 
 # Reference
-* The project is based on 
+* The project is based from [githubalexliu/NS-Shaftt](https://github.com/githubalexliu/NS-Shaftt)
