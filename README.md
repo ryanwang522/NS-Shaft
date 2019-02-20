@@ -6,7 +6,7 @@
 
 ### Network
 * Server-client architecture using socket.
-* Syncronize the objects (e.g. player, platform) and game information in two computers for dual mode.
+* Synchronize the objects (e.g. player, platform) and game information in two computers for dual mode.
 
 ### Polymorphism
 * Each type of platform extends from the base platform class. 
