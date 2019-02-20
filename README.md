@@ -2,7 +2,7 @@
 * This is a classical game that player should keep going down stair for staying alive.
 * This project for practicing `Network` and `Polymorphism` in Java.
 * Here is a simple demo for single player mode
-* [Single player](https://imgur.com/CTWcgtU)
+* ![](https://i.imgur.com/qRtKe4J.gif)
 
 ### Network
 * Server-client architecture using socket.
