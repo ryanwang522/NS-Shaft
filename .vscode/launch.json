@@ -1,26 +1,21 @@
 {
-    // 使用 IntelliSense 以得知可用的屬性。
-    // 暫留以檢視現有屬性的描述。
-    // 如需詳細資訊，請瀏覽: https://go.microsoft.com/fwlink/?linkid=830387
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
         {
             "type": "java",
-            "name": "Debug (Launch)-NSShaft<NS-Shaft>",
+            "name": "Debug (Launch) - Current File",
             "request": "launch",
-            "cwd": "${workspaceFolder}",
-            "console": "internalConsole",
-            "stopOnEntry": false,
-            "mainClass": "NSShaft",
-            "projectName": "NS-Shaft",
-            "args": ""
+            "mainClass": "${file}"
         },
         {
             "type": "java",
-            "name": "Debug (Attach)",
-            "request": "attach",
-            "hostName": "localhost",
-            "port": 0
+            "name": "Debug (Launch)-NSShaft<NS-Shaft>",
+            "request": "launch",
+            "mainClass": "NSShaft",
+            "projectName": "NS-Shaft"
         }
     ]
 }

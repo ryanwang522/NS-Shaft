@@ -12,8 +12,6 @@ public class Player implements Serializable {
 	public static final int EAST = 1, WEST = 0;
 	public boolean isInjured;
 	
-	// TODO: Add a attribute for current platform
-	
 	public Player(Character playerNum) {
 		this.curDirection = -1;
 		this.curPlatform = -1;

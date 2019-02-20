@@ -2,15 +2,14 @@ import java.io.*;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 
-public class GameClient implements Runnable {
+public class GameClient {
     private Socket connectionSocket;
     private InetSocketAddress isa;
     private ObjectOutputStream oos;
     private ObjectInputStream ois;
-    private Boolean isConnected = false;
     
     public int playerIndex = -1;
-    public Packet packet;
+    public Packet curPacket;
 
     public GameClient(String serverIP, int port) {
         isa = new InetSocketAddress(serverIP, port);
@@ -18,7 +17,7 @@ public class GameClient implements Runnable {
             connectionSocket = new Socket();
             connectionSocket.connect(isa, 1000);
             connectionSocket.setKeepAlive(true);
-            System.out.println("Client init success!");
+            System.out.println("[CLIENT] Client init success!");
 
             oos = new ObjectOutputStream(connectionSocket.getOutputStream());
             ois = new ObjectInputStream(connectionSocket.getInputStream());
@@ -40,48 +39,61 @@ public class GameClient implements Runnable {
 
     public Packet recvPacket() {
         Object dataReceived;
-        Packet curPacket = null;
+        curPacket = null;
         if (ois != null) {
             try {
                 dataReceived = ois.readObject();
                 if (dataReceived instanceof Packet) {
                     curPacket = (Packet) dataReceived;
-                    if (playerIndex == -1) {
+                    if (playerIndex == -1) 
                         playerIndex = curPacket.playerIndex;
-                    }
+
                     for (int i = 0; i < 7; i++) {
                         curPacket.platforms[i].setY(curPacket.platformY[i]);
                         curPacket.platforms[i].setX(curPacket.platformX[i]);
-
                     }
+                    
                     for (int i = 0; i < 2; i++) {
                         curPacket.players[i].setY(curPacket.playerY[i]);
                         curPacket.players[i].setX(curPacket.playerX[i]);
-
                     }
                 }
- 
+
             } catch (ClassNotFoundException | IOException e) {
                 e.printStackTrace();
                 return null;
             }
         } else {
-            System.out.println("ois error");
+            System.out.println("[CLIENT] ois error");
             return null;
         }
         
         return curPacket;
     }
 
-	@Override
-	public void run() {
-		while (true) {
-            /* Keep fatching packet */
-            this.packet = recvPacket();
-            //System.out.println("client: " + curPacket.platforms[5].toString() + curPacket.platformY[5]);
-            //System.out.println("run");
+    public void close() throws IOException {
+        try {
+            sendCmd("CLIENT_CLOSE");
+            sleep(1500);
+        } finally {
+            try { 
+                oos.close();
+            } finally {
+                try {
+                    ois.close();
+                } finally {
+                    connectionSocket.close();
+                    System.out.println("[CLIENT] Player" + (playerIndex+1) + " socket cloesd.");
+                }
+            }
         }
-	}
+    }
 
-
+    public void sleep(long ms) {
+        try {
+            Thread.sleep(ms);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    } 
 }

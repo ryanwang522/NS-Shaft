@@ -17,7 +17,7 @@ public class NSShaft extends JPanel implements ActionListener, KeyListener {
     private JCheckBoxMenuItem cbSpring, cbTemp, cbRolling;
     private Player player;
     private Player[] players;
-    private boolean start = false, moving = false, moveRight = false, moveLeft = false, pause = false, isSet = false;
+    private boolean start = false, moving = false, pause = false, isSet = false;
     private Timer gameTimer, platformTimer;
     private Platform[] platforms;
     private static final int platformTypes = 6;
@@ -32,6 +32,10 @@ public class NSShaft extends JPanel implements ActionListener, KeyListener {
     private GameInfo gameInfo;
     private GameClient client;
     private Packet ply2Packet;
+    private String[] imgName = {
+        "normal_platform", "rolling_platform_left",
+        "rolling_platform_right" , "spike_platform",
+        "spring_platform", "temp_platform" };
 
     public static void main(String[] args) {
         new NSShaft();
@@ -50,7 +54,7 @@ public class NSShaft extends JPanel implements ActionListener, KeyListener {
         Color cf1 = new Color(216, 224, 66);
         lbLevel.setForeground(cf1);
         lbLevel.setText("Level " + level);
-        lbLevel.setPreferredSize(new Dimension(140, 30));
+        lbLevel.setPreferredSize(new Dimension(160, 30));
         lbLevel.setHorizontalAlignment(SwingConstants.CENTER);
 
         // title
@@ -86,8 +90,8 @@ public class NSShaft extends JPanel implements ActionListener, KeyListener {
         lbRecordTitle.setFont(f3);
         lbRecordTitle.setForeground(new Color(122, 122, 122));
         lbRecordTitle.setPreferredSize(new Dimension(190, 25));
-        String pathRecord="img/record.png";
-        Icon iconRecord=new ImageIcon(pathRecord); 
+        String pathRecord = "img/record.png";
+        Icon iconRecord = new ImageIcon(pathRecord); 
         lbRecordTitle.setIcon(iconRecord);
         lbRecordTitle.setAlignmentX(Component.CENTER_ALIGNMENT);
 
@@ -258,8 +262,8 @@ public class NSShaft extends JPanel implements ActionListener, KeyListener {
                 gameInfo.players[i].draw(g2);
 
             for (int i = 0; i < gameInfo.platforms.length; i++) {
-                if (platforms[i] != null)
-                    platforms[i].draw(g2);
+                if (gameInfo.platforms[i] != null)
+                    gameInfo.platforms[i].draw(g2);
                 else 
                     System.out.println("null");
             }
@@ -328,7 +332,7 @@ public class NSShaft extends JPanel implements ActionListener, KeyListener {
             /* Exit individual mode */
             if (start) endGame();
             
-            Object[] possibleValues = { "Server", "Client"}; 
+            Object[] possibleValues = { "Server", "Client" }; 
             Object selectedValue = JOptionPane.showInputDialog(null, "Server or Clent?", "Selection Mode", 
                 JOptionPane.INFORMATION_MESSAGE, null, possibleValues, possibleValues[0]);
             if (selectedValue == null) {
@@ -352,12 +356,8 @@ public class NSShaft extends JPanel implements ActionListener, KeyListener {
 					e1.printStackTrace();
 				}
 
-                //while (cs.getServer() == null) {
-                //    System.out.println("Server init failed.");
-                //}
-
                 GameServer server = cs.getServer();
-                System.out.println("Waiting for connect...");
+                System.out.println("[ENV] Waiting for connect...");
 
                 client = new GameClient(server.getServerIP(), 8000);
 
@@ -368,19 +368,16 @@ public class NSShaft extends JPanel implements ActionListener, KeyListener {
 					e1.printStackTrace();
 				}
                 dualModeStart();
-
-
-                // start to fetch data
-                //new Thread(client).start();
             
             } else {
+                // TODO: Let user input server ip
                 /* --- Client Player 2 --- */
-                client = new GameClient("114.24.99.94", 8001);
-
-                // Open a thread to keep fetching data
-                new Thread(client);
-
-
+                this.playerNum = 2;
+                resetEnv();
+                client = new GameClient("59.115.211.197", 8001);
+                gameTimer.start();
+                repaint();
+                System.out.println("[ENV] Client game start!");
             }
 
         
@@ -402,6 +399,11 @@ public class NSShaft extends JPanel implements ActionListener, KeyListener {
             if (playerNum == 2 && client.playerIndex == -1) {
                 /* receive packet to update playerIndex first */
                 client.recvPacket();
+                if (client.playerIndex == 1) {
+                    // player 2
+                    Packet p = client.curPacket;
+                    gameInfo = new GameInfo(p.players, p.platforms, p.isPlaying, p.winner);
+                }
                 return;
             }
 
@@ -440,45 +442,57 @@ public class NSShaft extends JPanel implements ActionListener, KeyListener {
                     // if player does not intersect any platforms, he moves down
                     // else if player intersects any platforms, he moves up
                     checkCurrentPlatform(player);
-                    //System.out.println("after check");
                     if (player.curPlatform == -1)
                         player.moveDown();
                     else 
                         player.moveUp();
                     
-                    this.players[i] = gameInfo.players[i];
+                    if (client != null) 
+                        lbLives.setIcon(new ImageIcon("img/lives" + gameInfo.players[client.playerIndex].live + ".png"));
 
+                    this.players[i] = gameInfo.players[i];
                     
-                    // put in another place?
                     if (players[i].live == 0 || players[i].getY() >= 600) {
-                        winner = 1 - i;
+                        gameInfo.update(1 - i);
                         endGame();
                         break;
                     }
                 }
             } else {
                 // Dual mode player2 client
-                System.out.println("Player2");
                 ply2Packet = client.recvPacket();
                 if (ply2Packet != null) {
                     if (client.playerIndex == -1) 
                         client.playerIndex = ply2Packet.playerIndex;
 
                     // your player
-                    players[0] = ply2Packet.players[client.playerIndex];
+                    gameInfo.players[0] = ply2Packet.players[client.playerIndex];
+                    gameInfo.players[0].live = ply2Packet.lives;
                     // others player
-                    players[1] = ply2Packet.players[1 - client.playerIndex];
+                    gameInfo.players[1] = ply2Packet.players[1 - client.playerIndex];
 
-                    platforms = ply2Packet.platforms;
+                    lbLives.setIcon(new ImageIcon("img/lives" + gameInfo.players[0].live + ".png"));
+
+                    for (int i = 0; i < gameInfo.platforms.length; i++) {
+                        gameInfo.platforms[i] = ply2Packet.platforms[i];
+                        gameInfo.platforms[i].image = 
+                            new ImageIcon("img/" + imgName[ply2Packet.platType[i] - '0'] + ".png");
+                    }
+
+                    gameInfo.platforms = ply2Packet.platforms;
+                    gameInfo.update(ply2Packet.winner);
                     this.start = ply2Packet.isPlaying;
+
+                    if (gameInfo.winner != -1)  
+                        endGame();
+                    
                     ply2Packet = null;
                 } else {
-                    System.out.println("Packet is null.");
+                    System.out.println("[ENV] Packet is null.");
                 }
             }
             
         }
-
 
         if (e.getSource() == platformTimer) {
             /* Single mode or dual mode's server side */
@@ -504,22 +518,21 @@ public class NSShaft extends JPanel implements ActionListener, KeyListener {
             return;
 
         /* Show injured image */
-        /*if (player.isInjured) {
-            if (!isSet) {
-                isSet = true;
-                prevSec = seconds;
-            }
-            else 
-                if (seconds - prevSec >= 10) {
-                    player.isInjured = false;
-                    isSet = false;
+        for (int i = 0; i < gameInfo.players.length; i++) {
+            Player player = gameInfo.players[i];
+            if (player.isInjured) {
+                if (!isSet) {
+                    isSet = true;
+                    prevSec = seconds;
+                } else {
+                    if (seconds - prevSec >= 10) {
+                        player.isInjured = false;
+                        isSet = false;
+                    }
                 }
-        }*/
+            }
+        }
             
-
-        /* Update current game info */
-        //this.gameInfo.update(this.winner);
-
         repaint();
     }
     
@@ -539,7 +552,7 @@ public class NSShaft extends JPanel implements ActionListener, KeyListener {
         gameTimer.restart();
         menu.setEnabled(false);
         repaint();
-        System.out.println("Dual mode start...");
+        System.out.println("[ENV] Dual mode start...");
     }
 
     public void gameStart(int playerNum) {
@@ -596,13 +609,12 @@ public class NSShaft extends JPanel implements ActionListener, KeyListener {
             platform = new NormalPlatform();
         }
         
-
         return platform;
     }
     
     public void resetEnv() {
-        this.moveRight = false;
-        this.moveLeft = false;
+        //this.moveRight = false;
+        //this.moveLeft = false;
         this.start = false;
         this.isSet = false;
         this.platforms = new Platform[7]; 
@@ -615,7 +627,9 @@ public class NSShaft extends JPanel implements ActionListener, KeyListener {
         }
         if (this.playerNum == 1) player = players[0];
 
+        this.client = null;
         this.seconds = 0;
+        this.prevSec = 0;
         this.level = 0;
         this.lbLives.setIcon(new ImageIcon("img/lives" + lives + ".png"));
         this.lbLevel.setText("Level " + level);
@@ -636,7 +650,7 @@ public class NSShaft extends JPanel implements ActionListener, KeyListener {
                 if (playerNum > 1 && !moving) {
                     // Dual mode
                     client.sendCmd("LEFT");
-                    players[client.playerIndex].curDirection = 0;
+                    gameInfo.players[0].curDirection = 0;
                 } else {
                     players[0].curDirection = 0;
                 }
@@ -647,7 +661,7 @@ public class NSShaft extends JPanel implements ActionListener, KeyListener {
                 if (playerNum > 1 && !moving) {
                     // Dual mode
                     client.sendCmd("RIGHT");
-                    players[client.playerIndex].curDirection = 1;
+                    gameInfo.players[0].curDirection = 1;
                 } else 
                     players[0].curDirection = 1;
 
@@ -670,25 +684,15 @@ public class NSShaft extends JPanel implements ActionListener, KeyListener {
     @Override
     public void keyReleased(KeyEvent e) {
         if (start) {
-            /*if (e.getKeyCode() == KeyEvent.VK_LEFT) {
-                moveLeft = false;
-            } else if (e.getKeyCode() == KeyEvent.VK_RIGHT) {
-                moveRight = false;
-            } */
- 
             if (playerNum > 1) {
                 // Dual mode
                 moving = false;
                 client.sendCmd("RELEASE");
-                players[client.playerIndex].curDirection = -1;
+                gameInfo.players[0].curDirection = -1;
             } else {
                 // Single mode clear the movement
                 players[0].curDirection = -1;
             }
-            // Clear the movement when release key
-            //for (int i = 0; i < players.length; i++) 
-            //    players[i].curDirection = -1;
-            
         }
     }
 
@@ -704,13 +708,15 @@ public class NSShaft extends JPanel implements ActionListener, KeyListener {
             //System.out.println("intersect platform: " + platformIndex);
             platform.interactWithPlayer(player);
             player.previousPlatform = platformIndex;
-            lbLives.setIcon(new ImageIcon("img/lives" + player.live + ".png"));
+            if (playerNum == 1)
+                lbLives.setIcon(new ImageIcon("img/lives" + player.live + ".png"));
         }
         
         /* Player interacts with top-spike */
         if (player.getRectTop().intersects(topSpike.getRect())) {
             player.changeLive(-5);
-            lbLives.setIcon(new ImageIcon("img/lives" + player.live + ".png"));
+            if (playerNum == 1)
+                lbLives.setIcon(new ImageIcon("img/lives" + player.live + ".png"));
             player.setY(player.getY() + 40);
         }
         
@@ -718,8 +724,13 @@ public class NSShaft extends JPanel implements ActionListener, KeyListener {
 
     private void clearEnv() {
         this.start = false;
-        if (playerNum == 1)
-            lbLives.setIcon(new ImageIcon("img/lives" + players[0].live + ".png"));
+
+        lbLives.setIcon(new ImageIcon("img/lives" + players[0].live + ".png"));
+
+        // stop the timers
+        if (playerNum == 1 || client.playerIndex == 0)
+            this.platformTimer.stop();
+        this.gameTimer.stop();
 
         // clean the platforms
         for (int j = 0; j < platforms.length; j++) 
@@ -727,10 +738,15 @@ public class NSShaft extends JPanel implements ActionListener, KeyListener {
         this.platforms = null;
         this.player = null;
         this.players = null;
-        
-        // stop the timers
-        this.platformTimer.stop();
-        this.gameTimer.stop();
+
+        // Clean up the sockets
+        if (client != null) {
+            try {
+                client.close();
+            } catch (IOException ec) {
+                ec.printStackTrace();
+            }
+        }
 
         btnPlay.setEnabled(true);
         menu.setEnabled(true);
@@ -738,6 +754,12 @@ public class NSShaft extends JPanel implements ActionListener, KeyListener {
 
     public void endGame() {
         clearEnv();
+
+        if (playerNum == 2) {
+            JOptionPane.showMessageDialog(null, "Player" + (gameInfo.winner + 1) + " win!", 
+                "NS-Shaft", JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
 
         if (level == 1) {
             JOptionPane.showMessageDialog(null, "You have completed " + level

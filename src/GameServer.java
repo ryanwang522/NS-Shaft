@@ -12,31 +12,30 @@ public class GameServer {
     int playerIndex = 0;
     ArrayList<Session> playerSessions = new ArrayList<>();
     ArrayList<InetAddress> playerIPs = new ArrayList<>();
-    boolean isGameStart = false;      
+    boolean isGameStart = false;
 
     public GameServer(int port, GameInfo p) {
         /* Initialize */
-        System.out.println("Server started!");
-        for (int i = 0; i < players.length; i++) 
+        System.out.println("[SERVER] Server started!");
+        for (int i = 0; i < players.length; i++)
             this.players[i] = p.players[i];
         for (int i = 0; i < platforms.length; i++)
             this.platforms[i] = p.platforms[i];
         for (int i = 0; i < serverSockets.length; i++)
             try {
-                serverSockets[i] = new ServerSocket(port+i);
-            } catch(IOException e) {
+                serverSockets[i] = new ServerSocket(port + i);
+            } catch (IOException e) {
                 System.out.println(e.getMessage());
             }
-        
-        try {
-            //URL url_name = new URL("http://ipv4bot.whatismyipaddress.com"); 
-            URL url_name = new URL("http://checkip.amazonaws.com"); 
-            
-            BufferedReader sc = 
-                new BufferedReader(new InputStreamReader(url_name.openStream())); 
 
-            ip = sc.readLine().trim(); 
-            System.out.println("Server IP: " + ip);
+        try {
+            // URL url_name = new URL("http://ipv4bot.whatismyipaddress.com");
+            URL url_name = new URL("http://checkip.amazonaws.com");
+
+            BufferedReader sc = new BufferedReader(new InputStreamReader(url_name.openStream()));
+
+            ip = sc.readLine().trim();
+            System.out.println("[SERVER] Server IP: " + ip);
 
         } catch (UnknownHostException e) {
             e.printStackTrace();
@@ -48,27 +47,27 @@ public class GameServer {
 
         this.info = p;
     }
+
     public void listen() {
         /* Start connecting */
         try {
-            while(true) {
-                System.out.println("Start connecting...");
+            while (true) {
+                System.out.println("[SERVER] Listening for " + (2 - playerIndex) + " players...");
                 // the socket for sending data to player (owned by server)
                 playerSockets[playerIndex] = serverSockets[playerIndex].accept();
                 playerSockets[playerIndex].setSoTimeout(5);
                 playerIPs.add(playerSockets[playerIndex].getInetAddress());
 
-                System.out.println("Accept: " + playerSockets[playerIndex].getInetAddress());
+                System.out.println("[SERVER] Accept player from " + playerSockets[playerIndex].getInetAddress());
                 playerIndex++;
 
                 // wait for the two players
                 if (playerIndex == 2) {
-                    System.out.println(playerIPs.get(0));
-                    System.out.println(playerIPs.get(1));
-                    System.out.println("There are two players, Game start!!!");
+
+                    System.out.println("[SERVER] " + "There are two players, Game start!!!");
                     break;
                 }
-            } 
+            }
 
             // let server engine start
             this.isGameStart = true;
@@ -77,17 +76,17 @@ public class GameServer {
 
             /* Session start. Open two threads to serve two players respectively */
             for (int i = 0; i < playerSockets.length; i++) {
-                System.out.println(info.toString());
                 playerSessions.add(new Session(playerSockets[i], this.players, this.platforms, info, i));
                 Thread gameThread = new Thread(playerSessions.get(i));
-                System.out.println("Thread-" + String.valueOf(i) + " start!");
+                System.out.println("[SERVER] Thread-" + String.valueOf(i) + " start!");
                 gameThread.start();
             }
 
-        } catch(IOException e) {
+        } catch (IOException e) {
             System.out.println(e.getMessage());
         }
     }
+
     public String getServerIP() {
         return this.ip;
     }
@@ -105,7 +104,7 @@ class Session implements Runnable {
     public Session(Socket socket, Player players[], Platform platforms[], GameInfo p, int pIndex) {
         // socket for sending data to player
         this.socket = socket;
-        for (int i = 0; i < players.length; i++) 
+        for (int i = 0; i < players.length; i++)
             this.players[i] = p.players[i];
         for (int i = 0; i < platforms.length; i++)
             this.platforms[i] = p.platforms[i];
@@ -118,16 +117,15 @@ class Session implements Runnable {
         try {
             oos = new ObjectOutputStream(this.socket.getOutputStream());
             ois = new ObjectInputStream(this.socket.getInputStream());
-        } catch(IOException e) {
+        } catch (IOException e) {
             System.out.println(e.getMessage());
         }
 
-        //System.out.println("isPlaying: " + p.isPlaying);
-        while(p.isPlaying) {
-             
+        while (p.isPlaying) {
+
             try {
                 /* Send location of all objects to player */
-                Packet dataToSend = new Packet(this.players, this.platforms, p.isPlaying, p.winner, this.playerIndex);
+                Packet dataToSend = new Packet(this.players, p.platforms, p.isPlaying, p.winner, this.playerIndex);
                 oos.writeObject(dataToSend);
                 oos.flush();
 
@@ -138,39 +136,49 @@ class Session implements Runnable {
                         String str = (String) dataReceived;
 
                         if (str.equals("RIGHT")) {
-                            // moveRight
-                            //p.updataPlayer(playerIndex, 1);
                             p.players[playerIndex].curDirection = 1;
-                            System.out.println("[SERVER] " + 
-                                String.valueOf(playerIndex) + " moves RIGHT");
+                            // System.out.println("[SERVER] " + String.valueOf(playerIndex) + " moves RIGHT");
                         }
-                        
+
                         if (str.equals("LEFT")) {
-                            // moveLeft
-                            //p.updataPlayer(playerIndex, 0);
                             p.players[playerIndex].curDirection = 0;
-                            //System.out.println(p.players[playerIndex].curDirection);
-                            System.out.println("[SERVER] " + 
-                                String.valueOf(playerIndex) + " moves LEFT");
+                            // System.out.println("[SERVER] " + String.valueOf(playerIndex) + " moves LEFT");
                         }
-                        
+
                         if (str.equals("RELEASE")) {
                             p.players[playerIndex].curDirection = -1;
-                            System.out.println("[SERVER] " + 
-                                String.valueOf(playerIndex) + " released");
+                            // System.out.println("[SERVER] " + String.valueOf(playerIndex) + " released");
                         }
-                        
+
+                        if (str.equals("CLIENT_CLOSE")) {
+                            close();
+                            break;
+                        }
+
                     }
 
                 }
             } catch (IOException e) {
-                //System.out.println("Server IOExcpt " + e.getMessage());
+                // System.out.println("Server IOExcpt " + e.getMessage());
             } catch (ClassNotFoundException e) {
                 e.printStackTrace();
-            } 
+            }
 
             for (int i = 0; i < platforms.length; i++)
                 this.platforms[i] = p.platforms[i];
+        }
+    }
+
+    private void close() throws IOException {
+        try {
+            oos.close();
+        } finally {
+            try {
+                ois.close();
+            } finally {
+                socket.close();
+                System.out.println("[SERVER] Session for player" + (this.playerIndex + 1) + " closed.");
+            }
         }
     }
 }

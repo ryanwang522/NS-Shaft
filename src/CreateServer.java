@@ -15,7 +15,7 @@ public class CreateServer implements Runnable {
     public void run() {
         this.server = new GameServer(port, info);
         this.server.listen();
-        System.out.println("Finish");
+        System.out.println("[SERVER] Server create successfully!");
     }
 
 }
