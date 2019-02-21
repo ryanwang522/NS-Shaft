@@ -71,29 +71,10 @@ public class GameClient {
         return curPacket;
     }
 
-    public void close() throws IOException {
-        try {
-            sendCmd("CLIENT_CLOSE");
-            sleep(1500);
-        } finally {
-            try { 
-                oos.close();
-            } finally {
-                try {
-                    ois.close();
-                } finally {
-                    connectionSocket.close();
-                    System.out.println("[CLIENT] Player" + (playerIndex+1) + " socket cloesd.");
-                }
-            }
-        }
+    public void close() throws IOException {          
+        oos.close();
+        ois.close();
+        connectionSocket.close();
+        System.out.println("[CLIENT] Player" + (playerIndex+1) + " socket cloesd.");
     }
-
-    public void sleep(long ms) {
-        try {
-            Thread.sleep(ms);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-    } 
 }

@@ -22,5 +22,9 @@ Java(TM) SE Runtime Environment 18.3 (build 10.0.1+10)
 Java HotSpot(TM) 64-Bit Server VM 18.3 (build 10.0.1+10, mixed mode)
 ```
 
+# Dual mode setup 
+* Modify `NS-Shaft.java` line 369 with your server ip.
+* Let user input server ip for connecting is still in progress.
+
 # Reference
 * The project is based from [githubalexliu/NS-Shaftt](https://github.com/githubalexliu/NS-Shaftt)

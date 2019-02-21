@@ -63,7 +63,6 @@ public class GameServer {
 
                 // wait for the two players
                 if (playerIndex == 2) {
-
                     System.out.println("[SERVER] " + "There are two players, Game start!!!");
                     break;
                 }
@@ -149,14 +148,7 @@ class Session implements Runnable {
                             p.players[playerIndex].curDirection = -1;
                             // System.out.println("[SERVER] " + String.valueOf(playerIndex) + " released");
                         }
-
-                        if (str.equals("CLIENT_CLOSE")) {
-                            close();
-                            break;
-                        }
-
                     }
-
                 }
             } catch (IOException e) {
                 // System.out.println("Server IOExcpt " + e.getMessage());
@@ -167,18 +159,17 @@ class Session implements Runnable {
             for (int i = 0; i < platforms.length; i++)
                 this.platforms[i] = p.platforms[i];
         }
+        
+        try { 
+            close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     private void close() throws IOException {
-        try {
-            oos.close();
-        } finally {
-            try {
-                ois.close();
-            } finally {
-                socket.close();
-                System.out.println("[SERVER] Session for player" + (this.playerIndex + 1) + " closed.");
-            }
-        }
+        ois.close();
+        socket.close();
+        System.out.println("[SERVER] Session for player" + (this.playerIndex + 1) + " closed.");
     }
 }

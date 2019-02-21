@@ -350,11 +350,7 @@ public class NSShaft extends JPanel implements ActionListener, KeyListener {
                 Thread t = new Thread(cs);
                 t.start();
 
-                try {
-					Thread.sleep(5000);
-				} catch (InterruptedException e1) {
-					e1.printStackTrace();
-				}
+                sleep(5000);
 
                 GameServer server = cs.getServer();
                 System.out.println("[ENV] Waiting for connect...");
@@ -362,11 +358,7 @@ public class NSShaft extends JPanel implements ActionListener, KeyListener {
                 client = new GameClient(server.getServerIP(), 8000);
 
                 while (!server.isGameStart) {}
-                try {
-					Thread.sleep(300);
-				} catch (InterruptedException e1) {
-					e1.printStackTrace();
-				}
+                sleep(300);
                 dualModeStart();
             
             } else {
@@ -374,7 +366,7 @@ public class NSShaft extends JPanel implements ActionListener, KeyListener {
                 /* --- Client Player 2 --- */
                 this.playerNum = 2;
                 resetEnv();
-                client = new GameClient("59.115.211.197", 8001);
+                client = new GameClient("114.24.136.85", 8001);
                 gameTimer.start();
                 repaint();
                 System.out.println("[ENV] Client game start!");
@@ -739,6 +731,9 @@ public class NSShaft extends JPanel implements ActionListener, KeyListener {
         this.player = null;
         this.players = null;
 
+        sleep(500);
+        gameInfo.isPlaying = false;
+
         // Clean up the sockets
         if (client != null) {
             try {
@@ -805,6 +800,14 @@ public class NSShaft extends JPanel implements ActionListener, KeyListener {
                 JOptionPane.showMessageDialog(null, e.getMessage() + "!",
                         "Error", JOptionPane.ERROR_MESSAGE);
             }
+        }
+    }
+
+    public void sleep(long ms) {
+        try {
+            Thread.sleep(ms);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
     }
 }
